@@ -15,30 +15,32 @@ class Platformer extends Phaser.Scene {
 
     create() {
         // Create a new tilemap game object which uses 18x18 pixel tiles, and is
-        // 45 tiles wide and 25 tiles tall.
-        this.map = this.add.tilemap("platformer-level-1", 18, 18, 45, 25);
+        // 999 tiles wide and 999 tiles tall.
+        this.map = this.add.tilemap("factory", 18, 18, 999, 999);
 
         // Add a tileset to the map
         // First parameter: name we gave the tileset in Tiled
         // Second parameter: key for the tilesheet (from this.load.image in Load.js)
-        this.tileset = this.map.addTilesetImage("kenny_tilemap_packed", "tilemap_tiles");
+        this.tileset = this.map.addTilesetImage("factory_tilemap", "factory_tilemap");
+        this.tileset = this.map.addTilesetImage("rock_packed", "rock_packed");
 
         // Create a layer
-        this.groundLayer = this.map.createLayer("Ground-n-Platforms", this.tileset, 0, 0);
+        this.groundLayer = this.map.createLayer("Ground", this.tileset, 0, 0);
+        this.decorLayer = this.map.createLayer("Decor", this.tileset, 0, 0);
 
         // Make it collidable
         this.groundLayer.setCollisionByProperty({
             collides: true
         });
 
-        // Find coins in the "Objects" layer in Phaser
-        // Look for them by finding objects with the name "coin"
+        // Find coins in the "Collectibles" layer in Phaser
+        // Look for them by finding objects with the name "collectible"
         // Assign the coin texture from the tilemap_sheet sprite sheet
         // Phaser docs:
         // https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Tilemaps.Tilemap-createFromObjects
 
-        this.coins = this.map.createFromObjects("Objects", {
-            name: "coin",
+        this.coins = this.map.createFromObjects("Collectibles", {
+            name: "collectible",
             key: "tilemap_sheet",
             frame: 151
         });
@@ -54,7 +56,7 @@ class Platformer extends Phaser.Scene {
         
 
         // set up player avatar
-        my.sprite.player = this.physics.add.sprite(30, 345, "platformer_characters", "tile_0000.png");
+        my.sprite.player = this.physics.add.sprite(30, 295, "platformer_characters", "tile_0000.png");
         my.sprite.player.setCollideWorldBounds(true);
 
         // Enable collision handling
@@ -88,9 +90,9 @@ class Platformer extends Phaser.Scene {
 
         my.vfx.walking.stop();
         
-        this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+        this.cameras.main.setBounds(0, 300, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.startFollow(my.sprite.player, true, 0.25, 0.25); // (target, [,roundPixels][,lerpX][,lerpY])
-        this.cameras.main.setDeadzone(50, 50);
+        //this.cameras.main.setDeadzone(50, 50);
         this.cameras.main.setZoom(this.SCALE);
         
 

@@ -1,9 +1,26 @@
 {
     "activeFile": "",
     "expandedProjectPaths": [
+        "."
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3
+        },
+        "factory.tmx": {
+            "scale": 1,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -392,
+                "y": -181
+            }
+        },
+        "factory.tmx#factory_tileset": {
+            "scaleInDock": 1
+        },
+        "factory.tmx#rock_tileset": {
             "scaleInDock": 1
         },
         "rock_tileset.tsx": {
@@ -23,6 +40,7 @@
     "project": "factory_flight.tiled-project",
     "property.type": "bool",
     "recentFiles": [
+        "factory.tmx",
         "rock_tileset.tsx"
     ],
     "tileset.embedInMap": true,

@@ -21,12 +21,12 @@ class Platformer extends Phaser.Scene {
         // Add a tileset to the map
         // First parameter: name we gave the tileset in Tiled
         // Second parameter: key for the tilesheet (from this.load.image in Load.js)
-        this.tileset = this.map.addTilesetImage("factory_tilemap", "factory_tilemap");
-        this.tileset = this.map.addTilesetImage("rock_packed", "rock_packed");
+        this.factoryTileset = this.map.addTilesetImage("factory_tileset", "factory_tiles_packed");
+        this.rockTileset = this.map.addTilesetImage("rock_tileset", "rock_tiles_packed");
 
         // Create a layer
-        this.groundLayer = this.map.createLayer("Ground", this.tileset, 0, 0);
-        this.decorLayer = this.map.createLayer("Decor", this.tileset, 0, 0);
+        this.groundLayer = this.map.createLayer("Ground", [this.factoryTileset, this.rockTileset], 0, 0);
+        this.decorLayer = this.map.createLayer("Decor", [this.factoryTileset, this.rockTileset], 0, 0);
 
         // Make it collidable
         this.groundLayer.setCollisionByProperty({

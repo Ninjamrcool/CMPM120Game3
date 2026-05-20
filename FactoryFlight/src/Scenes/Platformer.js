@@ -11,7 +11,7 @@ class Platformer extends Phaser.Scene {
         this.physics.world.gravity.y = 1700;
         this.JUMP_VELOCITY = -400;
         this.PLAYER_SCALE = 0.75;
-        this.COYOTE_TIME = 0.1;
+        this.COYOTE_TIME = 0.08;
 
         // MISC ---------------------
         this.PARTICLE_VELOCITY = 50;
@@ -39,27 +39,33 @@ class Platformer extends Phaser.Scene {
             collides: true
         });
 
-        // Find coins in the "Collectibles" layer in Phaser
+        // Find collectibles in the "Collectibles" layer in Phaser
         // Look for them by finding objects with the name "collectible"
-        // Assign the coin texture from the tilemap_sheet sprite sheet
+        // Assign the collectibles texture from the tilemap_sheet sprite sheet
         // Phaser docs:
         // https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Tilemaps.Tilemap-createFromObjects
 
-        this.coins = this.map.createFromObjects("Collectibles", {
+        this.collectibles = this.map.createFromObjects("Collectibles", {
             name: "collectible",
-            key: "tilemap_sheet",
-            frame: 151
+            key: "wrench",
         });
-        
+
+        //this is so dumb
+        for (let collectible of this.collectibles) {
+            collectible.y += 576;
+        }
+
+        console.log(this.collectibles[0]);
 
         // Since createFromObjects returns an array of regular Sprites, we need to convert 
         // them into Arcade Physics sprites (STATIC_BODY, so they don't move) 
-        this.physics.world.enable(this.coins, Phaser.Physics.Arcade.STATIC_BODY);
+        this.physics.world.enable(this.collectibles, Phaser.Physics.Arcade.STATIC_BODY);
 
-        // Create a Phaser group out of the array this.coins
+        // Create a Phaser group out of the array this.collectibles
         // This will be used for collision detection below.
-        this.coinGroup = this.add.group(this.coins);
+        this.collectibleGroup = this.add.group(this.collectibles);
         
+        //console.log(this.collectibleGroup);
 
         // set up player avatar
         my.sprite.player = this.physics.add.sprite(30, 295, "platformer_characters", "tile_0000.png");
@@ -69,9 +75,26 @@ class Platformer extends Phaser.Scene {
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
 
-        // Handle collision detection with coins
-        this.physics.add.overlap(my.sprite.player, this.coinGroup, (obj1, obj2) => {
-            obj2.destroy(); // remove coin on overlap
+        this.collectiblesVFX = this.add.particles(50, 50, "kenny-particles");
+        this.collectiblesVFX.setConfig({
+            speed: { min: 50, max: 70},
+            scale: { start: 0.2, end: 0.1 },
+            alpha: { start: 1, end: 0 },
+            lifespan: 200,
+            frequency: 0,
+            quantity: 2,
+            blendMode: 'ADD',
+            color: {start: 0xFFFF00, end: 0xFFFF00},
+            frame: "star_01.png"
+        });
+        this.collectiblesVFX.stop();
+
+        // Handle collision detection with collectibles
+        this.physics.add.overlap(my.sprite.player, this.collectibleGroup, (obj1, obj2) => {
+            this.collectiblesVFX.x = obj2.x;
+            this.collectiblesVFX.y = obj2.y;
+            this.collectiblesVFX.explode()
+            obj2.destroy(); // remove collectible on overlap
         });
         
         // set up Phaser-provided cursor key input
@@ -105,7 +128,7 @@ class Platformer extends Phaser.Scene {
         this.coyoteTimer = 0;
     }
 
-    update(time, delta) {
+    update(time, delta) {        
         this.coyoteTimer += delta / 1000;
 
         if(cursors.left.isDown) {
@@ -169,5 +192,11 @@ class Platformer extends Phaser.Scene {
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
             this.scene.restart();
         }
+
+        //Move Collectibles
+        for (let collectible of this.collectibles) {
+            collectible.y += Math.sin(5 * time / 1000) * (delta / 1000) * 2
+        }
+
     }
 }

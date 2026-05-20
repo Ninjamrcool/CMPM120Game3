@@ -26,7 +26,8 @@ let config = {
             gravity: {
                 x: 0,
                 y: 0
-            }
+            },
+            overlapBias: 4
         }
     },
     width: 1440,

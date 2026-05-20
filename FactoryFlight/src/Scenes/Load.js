@@ -15,14 +15,16 @@ class Load extends Phaser.Scene {
         
         this.load.tilemapTiledJSON("factory", "factory.tmj");   // Tilemap in JSON
 
-        // Load the tilemap as a spritesheet
-        this.load.spritesheet("tilemap_sheet", "sprites/tilemap/tilemap_packed.png", {
-            frameWidth: 18,
-            frameHeight: 18
-        });
-
         //Load collectibles
         this.load.image("wrench", "sprites/collectibles/wrench.png");
+
+        //Load crate
+        this.load.image("crate", "sprites/crate.png");
+
+        //Load buttons
+        this.load.image("button_near", "sprites/button/near.png");
+        this.load.image("button_idle", "sprites/button/idle.png");
+        this.load.image("button_pressed", "sprites/button/pressed.png");
 
 
         // Oooh, fancy. A multi atlas is a texture atlas which has the textures spread

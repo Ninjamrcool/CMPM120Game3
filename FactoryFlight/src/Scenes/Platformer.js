@@ -12,6 +12,14 @@ class Platformer extends Phaser.Scene {
         this.JUMP_VELOCITY = -400;
         this.PLAYER_SCALE = 0.75;
         this.COYOTE_TIME = 0.08;
+        this.SPAWN_X = 85;
+        this.SPAWN_Y = 550;
+
+        // Objects ---------------------
+        this.CRATE_DRAG = 1200;
+        this.CRATE_MASS = 0.4;
+        this.BUTTON_RADIUS = 35;
+        this.BUTTON_PRESS_SECONDS = 1.0;
 
         // MISC ---------------------
         this.PARTICLE_VELOCITY = 50;
@@ -39,12 +47,7 @@ class Platformer extends Phaser.Scene {
             collides: true
         });
 
-        // Find collectibles in the "Collectibles" layer in Phaser
-        // Look for them by finding objects with the name "collectible"
-        // Assign the collectibles texture from the tilemap_sheet sprite sheet
-        // Phaser docs:
-        // https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Tilemaps.Tilemap-createFromObjects
-
+        // Create objects
         this.collectibles = this.map.createFromObjects("Collectibles", {
             name: "collectible",
             key: "wrench",
@@ -55,25 +58,64 @@ class Platformer extends Phaser.Scene {
             collectible.y += 576;
         }
 
-        console.log(this.collectibles[0]);
+        this.crates = this.map.createFromObjects("Crates", {
+            name: "crate",
+            key: "crate",
+        });
+
+        for (let crate of this.crates) {
+            crate.y += 576;
+            crate.originalX = crate.x;
+            crate.originalY = crate.y;
+        }
+
+        this.buttons = this.map.createFromObjects("Buttons", {
+            name: "button",
+            key: "button_idle",
+        });
+
+        //this is so dumb
+        for (let button of this.buttons) {
+            button.y += 576;
+            button.pressedTimer = 0.0
+        }
+
 
         // Since createFromObjects returns an array of regular Sprites, we need to convert 
         // them into Arcade Physics sprites (STATIC_BODY, so they don't move) 
         this.physics.world.enable(this.collectibles, Phaser.Physics.Arcade.STATIC_BODY);
+        this.physics.world.enable(this.crates, Phaser.Physics.Arcade.DYNAMIC_BODY);
+
+        for (let crate of this.crates) {
+            crate.body.setDragX(this.CRATE_DRAG);
+            crate.body.mass = this.CRATE_MASS;
+            crate.body.setBounce(0.0); 
+        }
+
 
         // Create a Phaser group out of the array this.collectibles
         // This will be used for collision detection below.
         this.collectibleGroup = this.add.group(this.collectibles);
-        
-        //console.log(this.collectibleGroup);
+        this.crateGroup = this.add.group(this.crates);
 
         // set up player avatar
-        my.sprite.player = this.physics.add.sprite(30, 295, "platformer_characters", "tile_0000.png");
+        my.sprite.player = this.physics.add.sprite(this.SPAWN_X, this.SPAWN_Y, "platformer_characters", "tile_0000.png");
         my.sprite.player.setCollideWorldBounds(true);
         my.sprite.player.scale = this.PLAYER_SCALE;
 
+        //random hitbox that is needed to make crates work because jumping on top of two crates is buggy and they phase through each other
+        this.invisibleHitbox = this.physics.add.sprite(1374, 369, "crate");
+        this.invisibleHitbox.alpha = 0;
+        this.physics.world.enable(this.invisibleHitbox, Phaser.Physics.Arcade.STATIC_BODY);
+        this.invisibleHitbox.body.setImmovable(true);
+
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
+        this.physics.add.collider(this.crateGroup, this.groundLayer);
+        this.physics.add.collider(my.sprite.player, this.crateGroup);
+        this.physics.add.collider(this.crateGroup, this.crateGroup);
+        this.physics.add.collider(this.invisibleHitbox, this.crateGroup);
+        this.physics.add.collider(this.invisibleHitbox, this.groundLayer);
 
         this.collectiblesVFX = this.add.particles(50, 50, "kenny-particles");
         this.collectiblesVFX.setConfig({
@@ -101,12 +143,19 @@ class Platformer extends Phaser.Scene {
         cursors = this.input.keyboard.createCursorKeys();
 
         this.rKey = this.input.keyboard.addKey('R');
+        this.eKey = this.input.keyboard.addKey('E');
+
+        this.wKey = this.input.keyboard.addKey('W');
+        this.aKey = this.input.keyboard.addKey('A');
+        this.sKey = this.input.keyboard.addKey('S');
+        this.dKey = this.input.keyboard.addKey('D');
 
         // debug key listener (assigned to D key)
-        this.input.keyboard.on('keydown-D', () => {
+        this.input.keyboard.on('keydown-Q', () => {
             this.physics.world.drawDebug = this.physics.world.drawDebug ? false : true
             this.physics.world.debugGraphic.clear()
         }, this);
+        this.physics.world.drawDebug = false;
 
         my.vfx.walking = this.add.particles(0, 0, "kenny-particles", {
             frame: ['smoke_03.png', 'smoke_09.png'],
@@ -126,12 +175,13 @@ class Platformer extends Phaser.Scene {
         this.cameras.main.setZoom(this.CAMERA_SCALE);
         
         this.coyoteTimer = 0;
+
     }
 
     update(time, delta) {        
         this.coyoteTimer += delta / 1000;
 
-        if(cursors.left.isDown) {
+        if(cursors.left.isDown || this.aKey.isDown) {
             my.sprite.player.setAccelerationX(-this.ACCELERATION);
             my.sprite.player.resetFlip();
             my.sprite.player.anims.play('walk', true);
@@ -148,7 +198,7 @@ class Platformer extends Phaser.Scene {
 
             }
 
-        } else if(cursors.right.isDown) {
+        } else if(cursors.right.isDown || this.dKey.isDown) {
             my.sprite.player.setAccelerationX(this.ACCELERATION);
             my.sprite.player.setFlip(true, false);
             my.sprite.player.anims.play('walk', true);
@@ -182,7 +232,7 @@ class Platformer extends Phaser.Scene {
         if(!my.sprite.player.body.blocked.down) {
             my.sprite.player.anims.play('jump');
         }
-        if((my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && Phaser.Input.Keyboard.JustDown(cursors.up)) {
+        if((my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && (Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(this.wKey))) {
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
         }
         if (my.sprite.player.body.blocked.down){
@@ -198,5 +248,32 @@ class Platformer extends Phaser.Scene {
             collectible.y += Math.sin(5 * time / 1000) * (delta / 1000) * 2
         }
 
+        for (let button of this.buttons) {
+            if (button.pressedTimer > 0) {
+                button.pressedTimer -= delta / 1000;
+                button.setTexture("button_pressed");
+                continue;
+            }
+
+            if (Math.sqrt((button.x - my.sprite.player.x) ** 2 + (button.y - my.sprite.player.y) ** 2) < this.BUTTON_RADIUS) {
+                button.setTexture("button_near");
+
+                if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
+                    button.setTexture("button_pressed");
+                    button.pressedTimer = this.BUTTON_PRESS_SECONDS
+                    this.reset_crates();
+                }
+            }
+            else{
+                button.setTexture("button_idle");
+            }
+        }
+    }
+
+    reset_crates(){
+        for (let crate of this.crates) {
+            crate.x = crate.originalX;
+            crate.y = crate.originalY;
+        }
     }
 }

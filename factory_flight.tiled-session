@@ -1,5 +1,5 @@
 {
-    "activeFile": "",
+    "activeFile": "factory.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -10,15 +10,15 @@
             "scaleInEditor": 3
         },
         "factory.tmx": {
-            "scale": 1,
+            "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": -392,
-                "y": -181
+                "x": 1472,
+                "y": -244
             }
         },
         "factory.tmx#factory_tileset": {
-            "scaleInDock": 1
+            "scaleInDock": 2
         },
         "factory.tmx#rock_tileset": {
             "scaleInDock": 1
@@ -36,6 +36,7 @@
     "map.tileHeight": 18,
     "map.tileWidth": 18,
     "openFiles": [
+        "factory.tmx"
     ],
     "project": "factory_flight.tiled-project",
     "property.type": "bool",

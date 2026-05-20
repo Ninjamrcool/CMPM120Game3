@@ -100,7 +100,7 @@ class Platformer extends Phaser.Scene {
 
         // set up player avatar
         my.sprite.player = this.physics.add.sprite(this.SPAWN_X, this.SPAWN_Y, "platformer_characters", "tile_0000.png");
-        my.sprite.player.setCollideWorldBounds(true);
+        my.sprite.player.setCollideWorldBounds(false);
         my.sprite.player.scale = this.PLAYER_SCALE;
 
         //random hitbox that is needed to make crates work because jumping on top of two crates is buggy and they phase through each other
@@ -169,7 +169,7 @@ class Platformer extends Phaser.Scene {
 
         my.vfx.walking.stop();
         
-        this.cameras.main.setBounds(0, 0, 10000, 650);
+        this.cameras.main.setBounds(0, 0, 1700, 650);
         this.cameras.main.startFollow(my.sprite.player, true, this.CAMERA_LERP_SPEED, this.CAMERA_LERP_SPEED);
         this.cameras.main.setDeadzone(50, 50);
         this.cameras.main.setZoom(this.CAMERA_SCALE);
@@ -268,6 +268,8 @@ class Platformer extends Phaser.Scene {
                 button.setTexture("button_idle");
             }
         }
+
+        console.log(my.sprite.player.x);
     }
 
     reset_crates(){

@@ -38,6 +38,11 @@ class Load extends Phaser.Scene {
         // The multiatlas was created using TexturePacker and the Kenny
         // Particle Pack asset pack.
         this.load.multiatlas("kenny-particles", "sprites/particles/kenny-particles.json");
+        this.load.image("white_pixel_particle", "sprites/particles/white_pixel.png");
+        this.load.image("gray_pixel_particle", "sprites/particles/gray_pixel.png");
+        this.load.image("orange_pixel_particle", "sprites/particles/orange_pixel.png");
+        this.load.image("green_pixel_particle", "sprites/particles/green_pixel.png");
+        this.load.image("white_star_particle", "sprites/particles/white_star.png");
 
         // Load font
         this.load.bitmapFont("rocketSquare", "KennyRocketSquare_0.png", "KennyRocketSquare.fnt");

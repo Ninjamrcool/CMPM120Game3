@@ -18,7 +18,7 @@ class Platformer extends Phaser.Scene {
         this.COYOTE_TIME = 0.08;
         this.SPAWN_X = 85;
         this.SPAWN_Y = 550;
-        this.RESPAWN_TIME = 1;
+        this.RESPAWN_TIME = 0.4;
 
         // Objects ---------------------
         this.CRATE_DRAG = 1200;
@@ -27,7 +27,8 @@ class Platformer extends Phaser.Scene {
         this.BUTTON_PRESS_SECONDS = 1.0;
 
         // MISC ---------------------
-        this.PARTICLE_VELOCITY = 50;
+        this.PARTICLE_VELOCITY = 30;
+        this.PARTICLE_FREQUENCY = 0.1;
         this.CAMERA_SCALE = 2.5;
         this.CAMERA_LERP_SPEED = 0.06;
         this.CAMERA_BOUND_X = 1700;
@@ -139,20 +140,23 @@ class Platformer extends Phaser.Scene {
             this.killCollider.active = false;
             this.playerFrozen = true;
             my.sprite.player.anims.play('dead', true);
+
+            this.deathVFX.x = my.sprite.player.x;
+            this.deathVFX.y = my.sprite.player.y + my.sprite.player.displayHeight;
+            this.deathVFX.explode()
+
             this.time.delayedCall(this.RESPAWN_TIME * 1000, () => {this.respawn_player();}, [], this);
         });
 
-        this.collectiblesVFX = this.add.particles(50, 50, "kenny-particles");
+        this.collectiblesVFX = this.add.particles(50, 50, "white_star_particle");
         this.collectiblesVFX.setConfig({
             speed: { min: 50, max: 70},
-            scale: { start: 0.2, end: 0.1 },
+            scale: { start: 1, end: 0 },
             alpha: { start: 1, end: 0 },
-            lifespan: 200,
+            lifespan: 350,
             frequency: 0,
-            quantity: 2,
-            blendMode: 'ADD',
-            color: {start: 0xFFFF00, end: 0xFFFF00},
-            frame: "star_01.png"
+            quantity: 4,
+            blendMode: 'ADD'
         });
         this.collectiblesVFX.stop();
 
@@ -182,17 +186,55 @@ class Platformer extends Phaser.Scene {
         }, this);
         this.physics.world.drawDebug = false;
 
-        my.vfx.walking = this.add.particles(0, 0, "kenny-particles", {
-            frame: ['smoke_03.png', 'smoke_09.png'],
+        my.vfx.walking = this.add.particles(0, 0, "white_pixel_particle", {
             random: true,
             scale: {start: 0.03, end: 0.1},
-            maxAliveParticles: 8,
             lifespan: 350,
-            gravityY: -400,
+            gravityY: 400,
             alpha: {start: 1, end: 0.1}, 
         });
 
         my.vfx.walking.stop();
+
+        this.jumpVFX = this.add.particles(50, 50, "gray_pixel_particle");
+        this.jumpVFX.setConfig({
+            speed: { min: 50, max: 70},
+            scale: { start: 0.15, end: 0 },
+            alpha: { start: 1, end: 0 },
+            angle: { min: 45, max: 135 },
+            lifespan: 350,
+            frequency: 0,
+            quantity: 4,
+            blendMode: 'ADD'
+        });
+        this.jumpVFX.stop();
+
+        this.buttonVFX = this.add.particles(50, 50, "orange_pixel_particle");
+        this.buttonVFX.setConfig({
+            speed: { min: 50, max: 70},
+            scale: { start: 0.15, end: 0 },
+            alpha: { start: 1, end: 0 },
+            angle: { min: 225, max: 315 },
+            lifespan: 450,
+            frequency: 0,
+            quantity: 8,
+            blendMode: 'ADD'
+        });
+        this.buttonVFX.setDepth(-1);
+        this.buttonVFX.stop();
+
+
+        this.deathVFX = this.add.particles(50, 50, "green_pixel_particle");
+        this.deathVFX.setConfig({
+            speed: { min: 150, max: 190},
+            scale: { start: 0.25, end: 0 },
+            angle: { min: 225, max: 315 },
+            lifespan: 650,
+            frequency: 0,
+            quantity: 15,
+            gravityY: 400,
+        });
+        this.deathVFX.stop();
         
         this.cameras.main.setBounds(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y);
         this.cameras.main.startFollow(my.sprite.player, true, this.CAMERA_LERP_SPEED, this.CAMERA_LERP_SPEED);
@@ -204,7 +246,7 @@ class Platformer extends Phaser.Scene {
         this.lastBlockedTime = 0;
         this.hasWon = false;
 
-        this.background = this.add.tileSprite(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y, "background").setOrigin(0, 0).setScrollFactor(0.5).depth = -1;
+        this.background = this.add.tileSprite(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y, "background").setOrigin(0, 0).setScrollFactor(0.5).depth = -2;
 
         this.input.on('pointerdown', (pointer) => {
             if (this.hasWon){
@@ -225,16 +267,14 @@ class Platformer extends Phaser.Scene {
             my.sprite.player.resetFlip();
             my.sprite.player.anims.play('walk', true);
 
-            //my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
+            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-15, my.sprite.player.displayHeight/2, false);
 
             my.vfx.walking.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
 
             // Only play smoke effect if touching the ground
 
-            if (my.sprite.player.body.blocked.down) {
-
-                my.vfx.walking.start();
-
+            if (my.sprite.player.body.blocked.down && Math.abs(my.sprite.player.body.velocity.x) > 0.1 && Math.random() < this.PARTICLE_FREQUENCY) {
+                my.vfx.walking.explode();
             }
 
         } else if(cursors.right.isDown || this.dKey.isDown && !this.playerFrozen) {
@@ -242,16 +282,14 @@ class Platformer extends Phaser.Scene {
             my.sprite.player.setFlip(true, false);
             my.sprite.player.anims.play('walk', true);
             
-            //my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
+            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-15, my.sprite.player.displayHeight/2, false);
 
             my.vfx.walking.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
 
             // Only play smoke effect if touching the ground
 
-            if (my.sprite.player.body.blocked.down) {
-
-                my.vfx.walking.start();
-
+            if (my.sprite.player.body.blocked.down && Math.abs(my.sprite.player.body.velocity.x) > 0.1 && Math.random() < this.PARTICLE_FREQUENCY) {
+                my.vfx.walking.explode();
             }
 
         } else {
@@ -275,6 +313,10 @@ class Platformer extends Phaser.Scene {
         }
         if(!this.playerFrozen && (my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && (Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(this.wKey))) {
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
+
+            this.jumpVFX.x = my.sprite.player.x;
+            this.jumpVFX.y = my.sprite.player.y + 10;
+            this.jumpVFX.explode()
         }
         if (my.sprite.player.body.blocked.down){
             this.coyoteTimer = 0;
@@ -304,6 +346,10 @@ class Platformer extends Phaser.Scene {
                     button.setTexture("button_pressed");
                     button.pressedTimer = this.BUTTON_PRESS_SECONDS
                     this.reset_crates();
+
+                    this.buttonVFX.x = button.x;
+                    this.buttonVFX.y = button.y + button.displayHeight/2;
+                    this.buttonVFX.explode()
                 }
             }
             else{
@@ -313,8 +359,8 @@ class Platformer extends Phaser.Scene {
 
         this.check_win_state();
 
-        console.log(my.sprite.player.x);
-        console.log(my.sprite.player.y);
+        //console.log(my.sprite.player.x);
+        //console.log(my.sprite.player.y);
     }
 
     reset_crates(){

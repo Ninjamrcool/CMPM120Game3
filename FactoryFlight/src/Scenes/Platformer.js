@@ -4,13 +4,19 @@ class Platformer extends Phaser.Scene {
     }
 
     init() {
-        // variables and settings
-        this.ACCELERATION = 400;
-        this.DRAG = 500;    // DRAG < ACCELERATION = icy slide
-        this.physics.world.gravity.y = 1500;
-        this.JUMP_VELOCITY = -600;
+        // PLAYER ---------------------
+        this.ACCELERATION = 800;
+        this.MAX_SPEED = 200;
+        this.DRAG = 1600;
+        this.physics.world.gravity.y = 1700;
+        this.JUMP_VELOCITY = -400;
+        this.PLAYER_SCALE = 0.75;
+        this.COYOTE_TIME = 0.1;
+
+        // MISC ---------------------
         this.PARTICLE_VELOCITY = 50;
-        this.SCALE = 2.0;
+        this.CAMERA_SCALE = 2.5;
+        this.CAMERA_LERP_SPEED = 0.06;
     }
 
     create() {
@@ -58,6 +64,7 @@ class Platformer extends Phaser.Scene {
         // set up player avatar
         my.sprite.player = this.physics.add.sprite(30, 295, "platformer_characters", "tile_0000.png");
         my.sprite.player.setCollideWorldBounds(true);
+        my.sprite.player.scale = this.PLAYER_SCALE;
 
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
@@ -90,15 +97,17 @@ class Platformer extends Phaser.Scene {
 
         my.vfx.walking.stop();
         
-        this.cameras.main.setBounds(0, 300, this.map.widthInPixels, this.map.heightInPixels);
-        this.cameras.main.startFollow(my.sprite.player, true, 0.25, 0.25); // (target, [,roundPixels][,lerpX][,lerpY])
-        //this.cameras.main.setDeadzone(50, 50);
-        this.cameras.main.setZoom(this.SCALE);
+        this.cameras.main.setBounds(0, 0, 10000, 650);
+        this.cameras.main.startFollow(my.sprite.player, true, this.CAMERA_LERP_SPEED, this.CAMERA_LERP_SPEED);
+        this.cameras.main.setDeadzone(50, 50);
+        this.cameras.main.setZoom(this.CAMERA_SCALE);
         
-
+        this.coyoteTimer = 0;
     }
 
-    update() {
+    update(time, delta) {
+        this.coyoteTimer += delta / 1000;
+
         if(cursors.left.isDown) {
             my.sprite.player.setAccelerationX(-this.ACCELERATION);
             my.sprite.player.resetFlip();
@@ -142,13 +151,19 @@ class Platformer extends Phaser.Scene {
             my.vfx.walking.stop();
         }
 
+        // Clamp x velocity
+        my.sprite.player.setVelocityX(Math.max(Math.min(my.sprite.player.body.velocity.x, this.MAX_SPEED), -this.MAX_SPEED));
+
         // player jump
         // note that we need body.blocked rather than body.touching b/c the former applies to tilemap tiles and the latter to the "ground"
         if(!my.sprite.player.body.blocked.down) {
             my.sprite.player.anims.play('jump');
         }
-        if(my.sprite.player.body.blocked.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
+        if((my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && Phaser.Input.Keyboard.JustDown(cursors.up)) {
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
+        }
+        if (my.sprite.player.body.blocked.down){
+            this.coyoteTimer = 0;
         }
 
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {

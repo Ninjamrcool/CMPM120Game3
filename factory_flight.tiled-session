@@ -45,6 +45,7 @@
         "rock_tileset.tsx"
     ],
     "tileset.embedInMap": true,
+    "tileset.lastUsedExportFilter": "All Files (*)",
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
         "height": 18,

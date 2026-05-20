@@ -6,8 +6,10 @@
 //
 // An example of putting sprites on the screen using Phaser
 // 
-// Art assets from Kenny Assets "Shape Characters" set:
+// Art assets from Kenny Assets:
 // https://kenney.nl/assets/shape-characters
+// https://kenney.nl/assets/pixel-platformer-industrial-expansion
+// https://kenney.nl/assets/pixel-platformer-blocks
 
 // debug with extreme prejudice
 "use strict"

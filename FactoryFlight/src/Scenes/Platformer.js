@@ -3,6 +3,10 @@ class Platformer extends Phaser.Scene {
         super("platformerScene");
     }
 
+    preload() {
+        this.load.scenePlugin('AnimatedTiles', './lib/AnimatedTiles.js', 'animatedTiles', 'animatedTiles');
+    }
+
     init() {
         // PLAYER ---------------------
         this.ACCELERATION = 800;
@@ -39,11 +43,16 @@ class Platformer extends Phaser.Scene {
         this.rockTileset = this.map.addTilesetImage("rock_tileset", "rock_tiles_packed");
 
         // Create a layer
+        this.killLayer = this.map.createLayer("Kill", [this.factoryTileset, this.rockTileset], 288, 288);
         this.groundLayer = this.map.createLayer("Ground", [this.factoryTileset, this.rockTileset], 0, 0);
         this.decorLayer = this.map.createLayer("Decor", [this.factoryTileset, this.rockTileset], 0, 0);
 
         // Make it collidable
         this.groundLayer.setCollisionByProperty({
+            collides: true
+        });
+
+        this.killLayer.setCollisionByProperty({
             collides: true
         });
 
@@ -117,6 +126,11 @@ class Platformer extends Phaser.Scene {
         this.physics.add.collider(this.invisibleHitbox, this.crateGroup);
         this.physics.add.collider(this.invisibleHitbox, this.groundLayer);
 
+        this.killCollider = this.physics.add.collider(my.sprite.player, this.killLayer, (obj1, obj2) => {
+            this.killCollider.active = false;
+            this.time.delayedCall(1000, () => {this.respawn_player();}, [], this);
+        });
+
         this.collectiblesVFX = this.add.particles(50, 50, "kenny-particles");
         this.collectiblesVFX.setConfig({
             speed: { min: 50, max: 70},
@@ -176,6 +190,9 @@ class Platformer extends Phaser.Scene {
         
         this.coyoteTimer = 0;
 
+        // Always at the end of create
+        //console.log(this.animatedTiles)
+        //this.animatedTiles.init(this.map);
     }
 
     update(time, delta) {        
@@ -269,7 +286,7 @@ class Platformer extends Phaser.Scene {
             }
         }
 
-        console.log(my.sprite.player.x);
+        //console.log(my.sprite.player.x);
     }
 
     reset_crates(){
@@ -277,5 +294,22 @@ class Platformer extends Phaser.Scene {
             crate.x = crate.originalX;
             crate.y = crate.originalY;
         }
+    }
+
+    respawn_player() {
+        this.killCollider.active = true;
+        
+        console.log(this.buttons);
+
+        let maxIndex = -1;
+        for (let i = 0; i < this.buttons.length; i++) {
+            if (this.buttons[i].y > 300 && this.buttons[i] && this.buttons[i].x < my.sprite.player.x && (maxIndex === -1 || this.buttons[i].x > this.buttons[maxIndex].x)) {
+                maxIndex = i;
+                console.log(this.buttons[i].x);
+            }
+        }
+
+        my.sprite.player.x = this.buttons[maxIndex].x;
+        my.sprite.player.y = this.buttons[maxIndex].y;
     }
 }

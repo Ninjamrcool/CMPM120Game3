@@ -18,6 +18,7 @@ class Platformer extends Phaser.Scene {
         this.COYOTE_TIME = 0.08;
         this.SPAWN_X = 85;
         this.SPAWN_Y = 550;
+        this.RESPAWN_TIME = 1;
 
         // Objects ---------------------
         this.CRATE_DRAG = 1200;
@@ -35,7 +36,7 @@ class Platformer extends Phaser.Scene {
 
     create() {
         this.time.timeScale = 0.5;
-        
+
         // Create a new tilemap game object which uses 18x18 pixel tiles, and is
         // 999 tiles wide and 999 tiles tall.
         this.map = this.add.tilemap("factory", 18, 18, 999, 999);
@@ -138,7 +139,7 @@ class Platformer extends Phaser.Scene {
             this.killCollider.active = false;
             this.playerFrozen = true;
             my.sprite.player.anims.play('dead', true);
-            this.time.delayedCall(1000, () => {this.respawn_player();}, [], this);
+            this.time.delayedCall(this.RESPAWN_TIME * 1000, () => {this.respawn_player();}, [], this);
         });
 
         this.collectiblesVFX = this.add.particles(50, 50, "kenny-particles");
@@ -201,8 +202,15 @@ class Platformer extends Phaser.Scene {
         this.coyoteTimer = 0;
         this.playerFrozen = false;
         this.lastBlockedTime = 0;
+        this.hasWon = false;
 
         this.background = this.add.tileSprite(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y, "background").setOrigin(0, 0).setScrollFactor(0.5).depth = -1;
+
+        this.input.on('pointerdown', (pointer) => {
+            if (this.hasWon){
+                this.scene.restart();
+            }
+        });
 
         // Always at the end of create
         //console.log(this.animatedTiles)
@@ -302,6 +310,11 @@ class Platformer extends Phaser.Scene {
                 button.setTexture("button_idle");
             }
         }
+
+        this.check_win_state();
+
+        console.log(my.sprite.player.x);
+        console.log(my.sprite.player.y);
     }
 
     reset_crates(){
@@ -325,5 +338,37 @@ class Platformer extends Phaser.Scene {
 
         my.sprite.player.x = this.buttons[maxIndex].x;
         my.sprite.player.y = this.buttons[maxIndex].y;
+    }
+
+    check_win_state() {
+        if (my.sprite.player.x < this.CAMERA_BOUND_X + 50 || this.hasWon){
+            return;
+        }
+
+        this.hasWon = true;
+
+        let x = 1420;
+        let y = 219;
+
+        
+        this.youWin = this.add.bitmapText(x, y - 30, "rocketSquare", "You Win!");
+        this.youWin.setDepth(4);
+        this.youWin.setOrigin(0.5);
+        this.youWin.setScale(1.5);
+
+        this.youWinRestart = this.add.bitmapText(x, y + 30, "rocketSquare", "- click to restart -");
+        this.youWinRestart.setDepth(4);
+        this.youWinRestart.setOrigin(0.5);
+        this.youWinRestart.setScale(1.0);
+
+        this.blackSquare = this.add.sprite(x, y, "black_square");
+        this.blackSquare.setDepth(3);
+        this.blackSquare.setScale(50);
+        this.blackSquare.alpha = 0.5;
+
+        //this.music.stop();
+        //this.gameOverSound.play();
+
+        return;
     }
 }

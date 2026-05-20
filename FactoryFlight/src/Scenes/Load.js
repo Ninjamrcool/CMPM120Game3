@@ -50,6 +50,17 @@ class Load extends Phaser.Scene {
         // Load UI
         this.load.image("black_square", "sprites/black_square.png");
 
+        // Load sounds
+        this.load.setPath("./assets/sounds");
+
+        this.load.audio("splash", "splash.mp3");
+        this.load.audio("footstep_1", "footstep_1.mp3");
+        this.load.audio("footstep_2", "footstep_2.mp3");
+        this.load.audio("footstep_3", "footstep_3.mp3");
+        this.load.audio("collect", "collect.mp3");
+        this.load.audio("jump", "jump.mp3");
+        this.load.audio("win", "win.mp3");
+
     }
 
     create() {

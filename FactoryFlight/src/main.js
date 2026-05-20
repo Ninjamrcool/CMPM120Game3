@@ -11,6 +11,13 @@
 // https://kenney.nl/assets/pixel-platformer-industrial-expansion
 // https://kenney.nl/assets/pixel-platformer-blocks
 // https://kenney.nl/assets/tiny-dungeon
+//
+// Sounds from pixabay:
+// https://pixabay.com/sound-effects/horror-horror-liquid-splash-352472/
+// https://pixabay.com/sound-effects/household-metal-footsteps-14727/
+// https://pixabay.com/sound-effects/film-special-effects-metal-clink-415813/
+// https://pixabay.com/sound-effects/film-special-effects-jumplanding-398256/
+// https://pixabay.com/sound-effects/technology-correct-answer-toy-bi-bling-476370/
 
 // debug with extreme prejudice
 "use strict"

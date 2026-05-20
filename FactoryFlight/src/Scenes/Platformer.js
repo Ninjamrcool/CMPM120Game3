@@ -140,6 +140,7 @@ class Platformer extends Phaser.Scene {
             this.killCollider.active = false;
             this.playerFrozen = true;
             my.sprite.player.anims.play('dead', true);
+            this.splashSound.play();
 
             this.deathVFX.x = my.sprite.player.x;
             this.deathVFX.y = my.sprite.player.y + my.sprite.player.displayHeight;
@@ -165,6 +166,7 @@ class Platformer extends Phaser.Scene {
             this.collectiblesVFX.x = obj2.x;
             this.collectiblesVFX.y = obj2.y;
             this.collectiblesVFX.explode()
+            this.collectSound.play();
             obj2.destroy(); // remove collectible on overlap
         });
         
@@ -234,6 +236,7 @@ class Platformer extends Phaser.Scene {
             quantity: 15,
             gravityY: 400,
         });
+        this.deathVFX.setDepth(-1);
         this.deathVFX.stop();
         
         this.cameras.main.setBounds(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y);
@@ -250,8 +253,45 @@ class Platformer extends Phaser.Scene {
 
         this.input.on('pointerdown', (pointer) => {
             if (this.hasWon){
+                this.footstep1Sound.stop();
+                this.footstep2Sound.stop();
+                this.footstep3Sound.stop();
                 this.scene.restart();
             }
+        });
+
+        this.splashSound = this.sound.add("splash", {
+            volume: 0.25
+        });
+
+        this.footstep1Sound = this.sound.add("footstep_1", {
+            volume: 0.15,
+            loop: true
+        });
+        this.footstep1Sound.stop();
+
+        this.footstep2Sound = this.sound.add("footstep_2", {
+            volume: 0.15,
+            loop: true
+        });
+        this.footstep2Sound.stop();
+
+        this.footstep3Sound = this.sound.add("footstep_3", {
+            volume: 0.15,
+            loop: true
+        });
+        this.footstep3Sound.stop();
+
+        this.collectSound = this.sound.add("collect", {
+            volume: 0.25
+        });
+
+        this.jumpSound = this.sound.add("jump", {
+            volume: 0.25
+        });
+
+        this.winSound = this.sound.add("win", {
+            volume: 0.25
         });
 
         // Always at the end of create
@@ -259,7 +299,7 @@ class Platformer extends Phaser.Scene {
         //this.animatedTiles.init(this.map);
     }
 
-    update(time, delta) {        
+    update(time, delta) {     
         this.coyoteTimer += delta / 1000;
 
         if(cursors.left.isDown || this.aKey.isDown && !this.playerFrozen) {
@@ -268,7 +308,6 @@ class Platformer extends Phaser.Scene {
             my.sprite.player.anims.play('walk', true);
 
             my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-15, my.sprite.player.displayHeight/2, false);
-
             my.vfx.walking.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
 
             // Only play smoke effect if touching the ground
@@ -303,6 +342,23 @@ class Platformer extends Phaser.Scene {
             my.vfx.walking.stop();
         }
 
+        if ((cursors.left.isDown || this.aKey.isDown || cursors.right.isDown || this.dKey.isDown || Math.abs(my.sprite.player.body.velocity.x) > 30) && my.sprite.player.body.blocked.down) {
+            if (!this.footstep1Sound.isPlaying) {
+                this.start_footstep_sounds();
+            }
+            this.footstep1Sound.volume = 0.15
+            this.footstep2Sound.volume = 0.15
+            this.footstep3Sound.volume = 0.15
+        }
+        else{
+            this.footstep1Sound.setLoop(false);
+            this.footstep2Sound.setLoop(false);
+            this.footstep3Sound.setLoop(false);
+            this.footstep1Sound.setVolume(this.footstep1Sound.volume - 5 * (delta / 1000));
+            this.footstep2Sound.setVolume(this.footstep2Sound.volume - 5 * (delta / 1000));
+            this.footstep3Sound.setVolume(this.footstep3Sound.volume - 5 * (delta / 1000));
+        }
+
         // Clamp x velocity
         my.sprite.player.setVelocityX(Math.max(Math.min(my.sprite.player.body.velocity.x, this.MAX_SPEED), -this.MAX_SPEED));
 
@@ -314,6 +370,8 @@ class Platformer extends Phaser.Scene {
         if(!this.playerFrozen && (my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && (Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(this.wKey))) {
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
 
+            this.jumpSound.play();
+
             this.jumpVFX.x = my.sprite.player.x;
             this.jumpVFX.y = my.sprite.player.y + 10;
             this.jumpVFX.explode()
@@ -324,6 +382,9 @@ class Platformer extends Phaser.Scene {
         }
 
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
+            this.footstep1Sound.stop();
+            this.footstep2Sound.stop();
+            this.footstep3Sound.stop();
             this.scene.restart();
         }
 
@@ -363,6 +424,17 @@ class Platformer extends Phaser.Scene {
         //console.log(my.sprite.player.y);
     }
 
+    start_footstep_sounds(){
+        this.footstep1Sound.play({detune: Phaser.Math.Between(-100, 100)});
+        this.footstep1Sound.setLoop(true);
+
+        this.footstep2Sound.play({detune: Phaser.Math.Between(-100, 100)});
+        this.footstep2Sound.setLoop(true);
+
+        this.footstep3Sound.play({detune: Phaser.Math.Between(-100, 100)});
+        this.footstep3Sound.setLoop(true);
+    }
+
     reset_crates(){
         for (let crate of this.crates) {
             crate.x = crate.originalX;
@@ -378,7 +450,6 @@ class Platformer extends Phaser.Scene {
         for (let i = 0; i < this.buttons.length; i++) {
             if (this.buttons[i].y > 300 && this.buttons[i] && this.buttons[i].x < my.sprite.player.x && (maxIndex === -1 || this.buttons[i].x > this.buttons[maxIndex].x)) {
                 maxIndex = i;
-                console.log(this.buttons[i].x);
             }
         }
 
@@ -392,6 +463,7 @@ class Platformer extends Phaser.Scene {
         }
 
         this.hasWon = true;
+        this.winSound.play();
 
         let x = 1420;
         let y = 219;
@@ -423,8 +495,9 @@ class Platformer extends Phaser.Scene {
         this.blackSquare.setScale(50);
         this.blackSquare.alpha = 0.5;
 
-        //this.music.stop();
-        //this.gameOverSound.play();
+        this.footstep1Sound.stop();
+        this.footstep2Sound.stop();
+        this.footstep3Sound.stop();
 
         return;
     }

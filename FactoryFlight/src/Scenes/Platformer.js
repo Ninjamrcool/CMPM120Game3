@@ -402,6 +402,17 @@ class Platformer extends Phaser.Scene {
         this.youWin.setOrigin(0.5);
         this.youWin.setScale(1.5);
 
+        let collectiblesLeft = this.collectibleGroup.getChildren().length;
+        this.collectedText = this.add.bitmapText(x, y, "rocketSquare", "Collected " + (3 - collectiblesLeft) + "/3  ");
+        this.collectedText.setDepth(4);
+        this.collectedText.setOrigin(0.5);
+        this.collectedText.setScale(1.0);
+
+        this.collectedWrench = this.add.sprite(x + 165, y + 2, "wrench");
+        this.collectedWrench.setDepth(4);
+        this.collectedWrench.setOrigin(0.5);
+        this.collectedWrench.setScale(1.5);
+
         this.youWinRestart = this.add.bitmapText(x, y + 30, "rocketSquare", "- click to restart -");
         this.youWinRestart.setDepth(4);
         this.youWinRestart.setOrigin(0.5);

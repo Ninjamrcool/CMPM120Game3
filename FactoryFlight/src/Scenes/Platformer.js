@@ -14,7 +14,7 @@ class Platformer extends Phaser.Scene {
         this.DRAG = 1600;
         this.physics.world.gravity.y = 1700;
         this.JUMP_VELOCITY = -400;
-        this.PLAYER_SCALE = 0.75;
+        this.PLAYER_SCALE = 1.35;
         this.COYOTE_TIME = 0.08;
         this.SPAWN_X = 85;
         this.SPAWN_Y = 550;
@@ -34,6 +34,8 @@ class Platformer extends Phaser.Scene {
     }
 
     create() {
+        this.time.timeScale = 0.5;
+        
         // Create a new tilemap game object which uses 18x18 pixel tiles, and is
         // 999 tiles wide and 999 tiles tall.
         this.map = this.add.tilemap("factory", 18, 18, 999, 999);
@@ -113,6 +115,10 @@ class Platformer extends Phaser.Scene {
         my.sprite.player = this.physics.add.sprite(this.SPAWN_X, this.SPAWN_Y, "platformer_characters", "tile_0000.png");
         my.sprite.player.setCollideWorldBounds(false);
         my.sprite.player.scale = this.PLAYER_SCALE;
+        my.sprite.player.body.setSize(15, 13, true); 
+        my.sprite.player.body.setOffset(4.5, 10);
+
+
 
         //random hitbox that is needed to make crates work because jumping on top of two crates is buggy and they phase through each other
         this.invisibleHitbox = this.physics.add.sprite(1374, 369, "crate");
@@ -131,6 +137,7 @@ class Platformer extends Phaser.Scene {
         this.killCollider = this.physics.add.collider(my.sprite.player, this.killLayer, (obj1, obj2) => {
             this.killCollider.active = false;
             this.playerFrozen = true;
+            my.sprite.player.anims.play('dead', true);
             this.time.delayedCall(1000, () => {this.respawn_player();}, [], this);
         });
 
@@ -193,6 +200,7 @@ class Platformer extends Phaser.Scene {
         
         this.coyoteTimer = 0;
         this.playerFrozen = false;
+        this.lastBlockedTime = 0;
 
         this.background = this.add.tileSprite(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y, "background").setOrigin(0, 0).setScrollFactor(0.5).depth = -1;
 
@@ -209,7 +217,7 @@ class Platformer extends Phaser.Scene {
             my.sprite.player.resetFlip();
             my.sprite.player.anims.play('walk', true);
 
-            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
+            //my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
 
             my.vfx.walking.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
 
@@ -226,7 +234,7 @@ class Platformer extends Phaser.Scene {
             my.sprite.player.setFlip(true, false);
             my.sprite.player.anims.play('walk', true);
             
-            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
+            //my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
 
             my.vfx.walking.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
 
@@ -242,8 +250,10 @@ class Platformer extends Phaser.Scene {
             // Set acceleration to 0 and have DRAG take over
             my.sprite.player.setAccelerationX(0);
             my.sprite.player.setDragX(this.DRAG);
-            my.sprite.player.anims.play('idle');
-            
+            if (!this.playerFrozen){
+                my.sprite.player.anims.play('idle');
+            }
+
             my.vfx.walking.stop();
         }
 
@@ -252,7 +262,7 @@ class Platformer extends Phaser.Scene {
 
         // player jump
         // note that we need body.blocked rather than body.touching b/c the former applies to tilemap tiles and the latter to the "ground"
-        if(!my.sprite.player.body.blocked.down) {
+        if(!my.sprite.player.body.blocked.down && time - this.lastBlockedTime > 100 && !this.playerFrozen) {
             my.sprite.player.anims.play('jump');
         }
         if(!this.playerFrozen && (my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && (Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(this.wKey))) {
@@ -260,6 +270,7 @@ class Platformer extends Phaser.Scene {
         }
         if (my.sprite.player.body.blocked.down){
             this.coyoteTimer = 0;
+            this.lastBlockedTime = time;
         }
 
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
@@ -291,8 +302,6 @@ class Platformer extends Phaser.Scene {
                 button.setTexture("button_idle");
             }
         }
-
-        //console.log(my.sprite.player.x);
     }
 
     reset_crates(){

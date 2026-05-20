@@ -26,6 +26,9 @@ class Load extends Phaser.Scene {
         this.load.image("button_idle", "sprites/button/idle.png");
         this.load.image("button_pressed", "sprites/button/pressed.png");
 
+        //Load background
+        this.load.image("background", "sprites/background.png");
+
 
         // Oooh, fancy. A multi atlas is a texture atlas which has the textures spread
         // across multiple png files, so as to keep their size small for use with

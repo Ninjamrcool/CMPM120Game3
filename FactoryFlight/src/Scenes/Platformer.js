@@ -29,6 +29,8 @@ class Platformer extends Phaser.Scene {
         this.PARTICLE_VELOCITY = 50;
         this.CAMERA_SCALE = 2.5;
         this.CAMERA_LERP_SPEED = 0.06;
+        this.CAMERA_BOUND_X = 1700;
+        this.CAMERA_BOUND_Y = 650;
     }
 
     create() {
@@ -128,6 +130,7 @@ class Platformer extends Phaser.Scene {
 
         this.killCollider = this.physics.add.collider(my.sprite.player, this.killLayer, (obj1, obj2) => {
             this.killCollider.active = false;
+            this.playerFrozen = true;
             this.time.delayedCall(1000, () => {this.respawn_player();}, [], this);
         });
 
@@ -183,12 +186,15 @@ class Platformer extends Phaser.Scene {
 
         my.vfx.walking.stop();
         
-        this.cameras.main.setBounds(0, 0, 1700, 650);
+        this.cameras.main.setBounds(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y);
         this.cameras.main.startFollow(my.sprite.player, true, this.CAMERA_LERP_SPEED, this.CAMERA_LERP_SPEED);
         this.cameras.main.setDeadzone(50, 50);
         this.cameras.main.setZoom(this.CAMERA_SCALE);
         
         this.coyoteTimer = 0;
+        this.playerFrozen = false;
+
+        this.background = this.add.tileSprite(0, 0, this.CAMERA_BOUND_X, this.CAMERA_BOUND_Y, "background").setOrigin(0, 0).setScrollFactor(0.5).depth = -1;
 
         // Always at the end of create
         //console.log(this.animatedTiles)
@@ -198,7 +204,7 @@ class Platformer extends Phaser.Scene {
     update(time, delta) {        
         this.coyoteTimer += delta / 1000;
 
-        if(cursors.left.isDown || this.aKey.isDown) {
+        if(cursors.left.isDown || this.aKey.isDown && !this.playerFrozen) {
             my.sprite.player.setAccelerationX(-this.ACCELERATION);
             my.sprite.player.resetFlip();
             my.sprite.player.anims.play('walk', true);
@@ -215,7 +221,7 @@ class Platformer extends Phaser.Scene {
 
             }
 
-        } else if(cursors.right.isDown || this.dKey.isDown) {
+        } else if(cursors.right.isDown || this.dKey.isDown && !this.playerFrozen) {
             my.sprite.player.setAccelerationX(this.ACCELERATION);
             my.sprite.player.setFlip(true, false);
             my.sprite.player.anims.play('walk', true);
@@ -249,7 +255,7 @@ class Platformer extends Phaser.Scene {
         if(!my.sprite.player.body.blocked.down) {
             my.sprite.player.anims.play('jump');
         }
-        if((my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && (Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(this.wKey))) {
+        if(!this.playerFrozen && (my.sprite.player.body.blocked.down || this.coyoteTimer < this.COYOTE_TIME) && (Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(this.wKey))) {
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
         }
         if (my.sprite.player.body.blocked.down){
@@ -298,8 +304,7 @@ class Platformer extends Phaser.Scene {
 
     respawn_player() {
         this.killCollider.active = true;
-        
-        console.log(this.buttons);
+        this.playerFrozen = false;
 
         let maxIndex = -1;
         for (let i = 0; i < this.buttons.length; i++) {
